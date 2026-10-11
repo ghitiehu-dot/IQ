@@ -20,11 +20,6 @@
     "ios": {
       "bundleIdentifier": "com.ghitiehu.brainlab"
     },
-    "plugins": [],
-    "extra": {
-      "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
-      }
-    }
+    "plugins": []
   }
 }
