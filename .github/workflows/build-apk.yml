@@ -43,15 +43,17 @@ jobs:
         run: npm install
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
-      - name: Build installable debug APK
+      - name: Build standalone release APK with embedded JavaScript
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
-      - name: Upload APK
+          ./gradlew assembleRelease
+      - name: Verify APK exists
+        run: test -s android/app/build/outputs/apk/release/app-release.apk
+      - name: Upload standalone APK
         uses: actions/upload-artifact@v4
         with:
-          name: brain-lab-android-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: brain-lab-android-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
