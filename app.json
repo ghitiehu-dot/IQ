@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Brain Lab",
+    "slug": "brain-lab",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
+    "android": {
+      "package": "com.ghitiehu.brainlab",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#0A1020"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.ghitiehu.brainlab"
+    },
+    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
