@@ -7,6 +7,7 @@ type Tab = "home" | "train" | "assess" | "progress";
 type Result = { id: string; title: string; score: number; total: number; date: string; domain: string };
 type GameId = "memory" | "sequence" | "focus" | "words";
 const STORAGE_KEY = "brain-lab-results-v1";
+const makePattern = () => { const values = Array.from({length:9}, (_, i) => i); for (let i = values.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [values[i], values[j]] = [values[j], values[i]]; } return values.slice(0, 4); };
 const C = { bg:"#080E1D", panel:"#111B30", panel2:"#17243D", line:"#273653", text:"#F4F7FF", muted:"#9AAAC5", blue:"#6D8CFF", cyan:"#55D6D1", violet:"#B49BFF", green:"#77E3A5", amber:"#FFD27A", red:"#FF8C9B" };
 
 const games: {id:GameId; title:string; subtitle:string; domain:string; icon:string; minutes:string}[] = [
@@ -49,7 +50,7 @@ export default function App() {
   };
   const startGame = (id:GameId) => {
     setActiveGame(id); setGameRound(0); setGameScore(0); setSequenceAnswer(""); setWordAnswer(""); setMemoryPick([]);
-    if(id==="memory") { const p=Array.from({length:4},()=>Math.floor(Math.random()*9)); setMemoryPattern(p); setMemoryShowing(true); setTimeout(()=>setMemoryShowing(false),1800); }
+    if(id==="memory") { const p=makePattern(); setMemoryPattern(p); setMemoryShowing(true); setTimeout(()=>setMemoryShowing(false),1800); }
   };
   const assessment = [
     {q:"What comes next? 2, 4, 8, 16, …",choices:["18","24","32","20"],correct:2,domain:"Reasoning"},
