@@ -83,7 +83,7 @@ export default function App() {
       <Heading>Remember the pattern</Heading>
       <Text style={styles.body}>{memoryShowing?"Memorize the highlighted tiles.":"Tap the tiles you remember."}</Text>
       <View style={styles.grid}>{Array.from({length:9},(_,i)=><TouchableOpacity key={i} onPress={()=>{if(memoryShowing)return;setMemoryPick(p=>p.includes(i)?p.filter(n=>n!==i):[...p,i]);}} style={[styles.tile,(memoryShowing&&memoryPattern.includes(i)||memoryPick.includes(i))&&styles.tileActive]}><Text style={styles.tileText}>{memoryShowing&&memoryPattern.includes(i)?"✦":memoryPick.includes(i)?"✓":""}</Text></TouchableOpacity>)}</View>
-      {!memoryShowing&&<Button title="Check pattern" onPress={()=>{const ok=memoryPattern.every(n=>memoryPick.includes(n))&&memoryPick.length===memoryPattern.length;const score=gameScore+(ok?1:0);if(gameRound===2)finishGame(score,3,"Visual memory","Memory Matrix");else{setGameScore(score);setGameRound(r=>r+1);setMemoryPick([]);setMemoryPattern(Array.from({length:4},()=>Math.floor(Math.random()*9)));setMemoryShowing(true);setTimeout(()=>setMemoryShowing(false),1600);}}}/>}
+      {!memoryShowing&&<Button title="Check pattern" onPress={()=>{const ok=memoryPattern.every(n=>memoryPick.includes(n))&&memoryPick.length===memoryPattern.length;const score=gameScore+(ok?1:0);if(gameRound===2)finishGame(score,3,"Visual memory","Memory Matrix");else{setGameScore(score);setGameRound(r=>r+1);setMemoryPick([]);setMemoryPattern(makePattern());setMemoryShowing(true);setTimeout(()=>setMemoryShowing(false),1600);}}}/>}
       {memoryShowing&&<Text style={styles.muted}>Look carefully…</Text>}
     </Card>;
     if(activeGame==="sequence") {
