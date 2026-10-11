@@ -31,10 +31,9 @@ Use Expo Go to preview the app during development. For a native Android build, u
 
 ## Build an APK
 
-1. Install and sign in to EAS CLI: `npm install -g eas-cli` and `eas login`.
-2. From this repository, run `eas build:configure` and follow the prompts to associate the app with your EAS account.
-3. Run `npm run build:apk`.
-4. Download the APK from the completed EAS build page and install it on an Android test device.
+**GitHub Actions (no EAS account required):** the repository includes `.github/workflows/build-apk.yml`. Run it manually from the Actions tab on the `build-apk` branch, then download the `brain-lab-android-debug-apk` artifact. The artifact contains a debug-signed APK for testing; do not distribute it as a production release.
+
+**EAS Build alternative:** install and sign in to EAS CLI with `npm install -g eas-cli` and `eas login`, run `eas build:configure`, then run `npm run build:apk`. Download the APK from the completed EAS build page.
 
 An APK has **not** yet been built or device-tested as part of this initial repository setup. Do not treat the project as release-ready until dependencies, TypeScript, native build, installation, and core flows have been verified.
 
