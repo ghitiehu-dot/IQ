@@ -1,13 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useMemo, useState } from "react";
+import { countUniqueIdeas, makePattern, scoreTargetTaps } from "./src/game-logic";
 import { SafeAreaView, ScrollView, Text, TouchableOpacity, View, StyleSheet, TextInput } from "react-native";
 
 type Tab = "home" | "train" | "assess" | "progress";
 type Result = { id: string; title: string; score: number; total: number; date: string; domain: string };
 type GameId = "memory" | "sequence" | "focus" | "words";
 const STORAGE_KEY = "brain-lab-results-v1";
-const makePattern = () => { const values = Array.from({length:9}, (_, i) => i); for (let i = values.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [values[i], values[j]] = [values[j], values[i]]; } return values.slice(0, 4); };
 const C = { bg:"#080E1D", panel:"#111B30", panel2:"#17243D", line:"#273653", text:"#F4F7FF", muted:"#9AAAC5", blue:"#6D8CFF", cyan:"#55D6D1", violet:"#B49BFF", green:"#77E3A5", amber:"#FFD27A", red:"#FF8C9B" };
 
 const games: {id:GameId; title:string; subtitle:string; domain:string; icon:string; minutes:string}[] = [
@@ -34,6 +34,7 @@ export default function App() {
   const [memoryPattern,setMemoryPattern] = useState<number[]>([]);
   const [memoryPick,setMemoryPick] = useState<number[]>([]);
   const [memoryShowing,setMemoryShowing] = useState(false);
+  const [focusTapped,setFocusTapped] = useState<number[]>([]);
   const [assessmentIndex,setAssessmentIndex] = useState(0);
   const [assessmentScore,setAssessmentScore] = useState(0);
   const [assessmentDone,setAssessmentDone] = useState(false);
@@ -46,10 +47,10 @@ export default function App() {
   };
   const finishGame = async (score:number,total:number,domain:string,title:string) => {
     await saveResult({id:Date.now().toString(),title,score,total,date:new Date().toISOString(),domain});
-    setActiveGame(null); setTab("progress"); setGameRound(0); setGameScore(0); setSequenceAnswer(""); setWordAnswer("");
+    setActiveGame(null); setTab("progress"); setGameRound(0); setGameScore(0); setSequenceAnswer(""); setWordAnswer(""); setFocusTapped([]);
   };
   const startGame = (id:GameId) => {
-    setActiveGame(id); setGameRound(0); setGameScore(0); setSequenceAnswer(""); setWordAnswer(""); setMemoryPick([]);
+    setActiveGame(id); setGameRound(0); setGameScore(0); setSequenceAnswer(""); setWordAnswer(""); setMemoryPick([]); setFocusTapped([]);
     if(id==="memory") { const p=makePattern(); setMemoryPattern(p); setMemoryShowing(true); setTimeout(()=>setMemoryShowing(false),1800); }
   };
   const assessment = [
@@ -92,9 +93,11 @@ export default function App() {
     }
     if(activeGame==="focus") {
       const targets=["◆","●","◆","▲","◆","■","●","◆","▲","■","◆","●"];
-      return <Card><Text style={styles.eyebrow}>ATTENTION · ROUND {gameRound+1}/3</Text><Heading>Tap every diamond</Heading><Text style={styles.body}>Tap the diamond symbols below. Avoid other shapes.</Text><View style={styles.symbolGrid}>{targets.map((s,i)=><TouchableOpacity key={i} onPress={()=>{if(s==="◆")setGameScore(v=>v+1);}} style={styles.symbol}><Text style={{fontSize:27,color:s==="◆"?C.cyan:C.violet}}>{s}</Text></TouchableOpacity>)}</View><Button title="Finish round" onPress={()=>{if(gameRound===2)finishGame(Math.min(gameScore,18),18,"Attention","Focus Rush");else setGameRound(r=>r+1);}}/><Text style={styles.muted}>Score records target taps; this is a practice activity, not a clinical attention test.</Text></Card>;
+      const roundTargets=targets.map((symbol,index)=>({symbol,index})).filter(item=>item.symbol==="◆").map(item=>item.index);
+      const roundHits=scoreTargetTaps(targets,focusTapped);
+      return <Card><Text style={styles.eyebrow}>ATTENTION · ROUND {gameRound+1}/3</Text><Heading>Tap every diamond</Heading><Text style={styles.body}>Tap each diamond once. Your selected tiles will be marked, and you can’t score the same tile twice.</Text><View style={styles.symbolGrid}>{targets.map((s,i)=><TouchableOpacity key={i} disabled={focusTapped.includes(i)} onPress={()=>{setFocusTapped(old=>old.includes(i)?old:[...old,i]);if(s==="◆")setGameScore(v=>v+1);}} style={[styles.symbol,focusTapped.includes(i)&&styles.tileActive]}><Text style={{fontSize:27,color:focusTapped.includes(i)?C.cyan:s==="◆"?C.cyan:C.violet}}>{focusTapped.includes(i)?"✓":s}</Text></TouchableOpacity>)}</View><Text style={styles.muted}>Targets found this round: {roundHits}/{roundTargets.length}</Text><Button title="Finish round" onPress={()=>{if(gameRound===2)finishGame(gameScore+roundHits,roundTargets.length*3,"Attention","Focus Rush");else {setGameRound(r=>r+1);setFocusTapped([]);}}}/><Text style={styles.muted}>This practice activity measures target hits, not clinical attention or a diagnosis.</Text></Card>;
     }
-    return <Card><Text style={styles.eyebrow}>CREATIVITY · ROUND {gameRound+1}/1</Text><Heading>Idea Machine</Heading><Text style={styles.body}>Write different, sensible uses for a paper clip. Separate ideas with commas.</Text><TextInput value={wordAnswer} onChangeText={setWordAnswer} multiline placeholder="e.g. bookmark, reset button…" placeholderTextColor={C.muted} style={[styles.input,{height:100,textAlignVertical:"top"}]}/><Button title="Save ideas" onPress={()=>{const ideas=[...new Set(wordAnswer.toLowerCase().split(/[,\n;]/).map(s=>s.trim()).filter(Boolean))];finishGame(Math.min(ideas.length,10),10,"Creative fluency","Idea Machine");}}/><Text style={styles.muted}>Idea count is a simple activity metric; originality is not automatically measured.</Text></Card>;
+    return <Card><Text style={styles.eyebrow}>CREATIVITY · ROUND {gameRound+1}/1</Text><Heading>Idea Machine</Heading><Text style={styles.body}>Write different, sensible uses for a paper clip. Separate ideas with commas.</Text><TextInput value={wordAnswer} onChangeText={setWordAnswer} multiline placeholder="e.g. bookmark, reset button…" placeholderTextColor={C.muted} style={[styles.input,{height:100,textAlignVertical:"top"}]}/><Button title="Save ideas" onPress={()=>{const ideas=countUniqueIdeas(wordAnswer);finishGame(Math.min(ideas.length,10),10,"Creative fluency","Idea Machine");}}/><Text style={styles.muted}>Idea count is a simple activity metric; originality is not automatically measured.</Text></Card>;
   };
 
   return <SafeAreaView style={styles.safe}><StatusBar style="light"/><View style={styles.topbar}><View><Text style={styles.brand}>BRAIN<Text style={{color:C.cyan}}> LAB</Text></Text><Text style={styles.tagline}>TEST · TRAIN · GROW</Text></View><View style={styles.avatar}><Text style={{color:C.cyan,fontWeight:"800"}}>BL</Text></View></View>
